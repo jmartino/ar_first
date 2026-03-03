@@ -8,7 +8,7 @@
     <style>
       body { margin: 0; overflow: hidden; }
       
-      /* Initial Overlay */
+      /* Initial Overlay - Blocks everything until user interacts */
       #ui { 
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
         background: rgba(0,0,0,0.9); color: white; z-index: 999; 
@@ -16,11 +16,11 @@
         font-family: sans-serif; cursor: pointer; text-align: center;
       }
 
-      /* Scanning Line Animation */
+      /* Scanning Line Animation - Shows while looking for the image */
       #scanning-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         z-index: 998; display: none; pointer-events: none;
-        border: 8px solid rgba(255,255,255,0.3); box-sizing: border-box;
+        border: 8px solid rgba(0, 255, 242, 0.2); box-sizing: border-box;
       }
       
       #scanning-line {
@@ -36,74 +36,4 @@
         100% { top: 0%; }
       }
 
-      .instructions { font-size: 0.8em; opacity: 0.7; margin-top: 10px; }
-    </style>
-  </head>
-
-  <body>
-    <div id="ui">
-      <h1>ENTER EXPERIENCE</h1>
-      <p class="instructions">Allow camera access and point at the artwork.</p>
-    </div>
-
-    <div id="scanning-overlay">
-      <div id="scanning-line"></div>
-    </div>
-
-    <a-scene 
-      mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false"
-      embedded>
-      
-      <a-assets>
-        <video id="arVideo" src="video.mp4" loop="true" crossorigin="anonymous" playsinline></video>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity id="target" mindar-image-target="targetIndex: 0">
-        <a-video src="#arVideo" width="1" height="1.301" position="0 0 0"></a-video>
-      </a-entity>
-    </a-scene>
-
-    <script>
-      const ui = document.querySelector('#ui');
-      const scanOverlay = document.querySelector('#scanning-overlay');
-      const video = document.querySelector('#arVideo');
-      const sceneEl = document.querySelector('a-scene');
-
-      ui.addEventListener('click', () => {
-        // 1. Hide the Start UI
-        ui.style.display = 'none';
-        
-        // 2. Start the AR Engine manually
-        const arSystem = sceneEl.systems["mindar-image-system"];
-        arSystem.start(); 
-
-        // 3. Show the scanning line
-        scanOverlay.style.display = 'block';
-
-        // 4. Force video to 'unlock' for Safari
-        video.play().then(() => {
-          video.pause(); // Hold it until target is found
-        }).catch(e => console.log("Video setup:", e));
-      });
-
-      // Target Detection Logic
-      const targetEntity = document.querySelector('#target');
-      
-      targetEntity.addEventListener("targetFound", () => {
-        console.log("Found!");
-        scanOverlay.style.display = 'none';
-        video.play();
-      });
-
-      targetEntity.addEventListener("targetLost", () => {
-        console.log("Lost!");
-        scanOverlay.style.display = 'block';
-        video.pause();
-      });
-    </script>
-  </body>
-</html>
+      .instructions { font-size: 0.9em; opacity: 0.8; margin-top
