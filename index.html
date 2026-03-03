@@ -4,34 +4,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    
     <style>
       body { margin: 0; overflow: hidden; }
+      
+      /* Initial Overlay */
       #ui { 
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.8); color: white; z-index: 999; 
+        background: rgba(0,0,0,0.9); color: white; z-index: 999; 
         display: flex; flex-direction: column; align-items: center; justify-content: center; 
-        font-family: sans-serif; cursor: pointer; 
+        font-family: sans-serif; cursor: pointer; text-align: center;
       }
-      /* The scanning line animation */
+
+      /* Scanning Line Animation */
       #scanning-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         z-index: 998; display: none; pointer-events: none;
-        border: 5px solid rgba(255,255,255,0.5); box-sizing: border-box;
+        border: 8px solid rgba(255,255,255,0.3); box-sizing: border-box;
       }
+      
       #scanning-line {
         width: 100%; height: 4px; background: #00fff2;
         position: absolute; top: 0;
-        animation: scan 3s linear infinite;
+        box-shadow: 0 0 15px #00fff2;
+        animation: scan 4s linear infinite;
       }
+
       @keyframes scan {
-        0% { top: 0%; } 100% { top: 100%; }
+        0% { top: 0%; }
+        50% { top: 100%; }
+        100% { top: 0%; }
       }
+
+      .instructions { font-size: 0.8em; opacity: 0.7; margin-top: 10px; }
     </style>
   </head>
+
   <body>
     <div id="ui">
-      <h1 id="ui-text">INITIALIZING...</h1>
-      <p>Please wait a moment</p>
+      <h1>ENTER EXPERIENCE</h1>
+      <p class="instructions">Allow camera access and point at the artwork.</p>
     </div>
 
     <div id="scanning-overlay">
@@ -39,9 +51,10 @@
     </div>
 
     <a-scene 
-      mindar-image="imageTargetSrc: targets.mind; autoStart: false;" 
+      mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" 
       vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
+      device-orientation-permission-ui="enabled: false"
+      embedded>
       
       <a-assets>
         <video id="arVideo" src="video.mp4" loop="true" crossorigin="anonymous" playsinline></video>
@@ -56,36 +69,40 @@
 
     <script>
       const ui = document.querySelector('#ui');
-      const uiText = document.querySelector('#ui-text');
       const scanOverlay = document.querySelector('#scanning-overlay');
       const video = document.querySelector('#arVideo');
       const sceneEl = document.querySelector('a-scene');
 
-      // Wait for the AR engine to be ready
-      sceneEl.addEventListener("ready", () => {
-        uiText.innerText = "TAP TO START AR";
-      });
-
       ui.addEventListener('click', () => {
-        // Only start if the engine is ready
+        // 1. Hide the Start UI
+        ui.style.display = 'none';
+        
+        // 2. Start the AR Engine manually
         const arSystem = sceneEl.systems["mindar-image-system"];
         arSystem.start(); 
-        
-        ui.style.display = 'none';
+
+        // 3. Show the scanning line
         scanOverlay.style.display = 'block';
-        video.play();
-        video.pause(); // Pre-warm the video for Safari
+
+        // 4. Force video to 'unlock' for Safari
+        video.play().then(() => {
+          video.pause(); // Hold it until target is found
+        }).catch(e => console.log("Video setup:", e));
       });
 
-      // Hide the scanning line once the art is found
+      // Target Detection Logic
       const targetEntity = document.querySelector('#target');
+      
       targetEntity.addEventListener("targetFound", () => {
+        console.log("Found!");
         scanOverlay.style.display = 'none';
         video.play();
       });
 
       targetEntity.addEventListener("targetLost", () => {
+        console.log("Lost!");
         scanOverlay.style.display = 'block';
+        video.pause();
       });
     </script>
   </body>
